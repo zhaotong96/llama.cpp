@@ -1127,40 +1127,9 @@ void handle_media(
     }
 
     if (string_starts_with(url, "http")) {
-        // download remote image
-        // TODO @ngxson : maybe make these params configurable
-        common_remote_params params;
-        params.max_size = 1024 * 1024 * 10; // 10MB
-        params.timeout  = 10; // seconds
-        SRV_INF("downloading image from '%s'\n", url.c_str());
-        auto res = common_remote_get_content(url, params);
-        if (200 <= res.first && res.first < 300) {
-            SRV_INF("downloaded %zu bytes\n", res.second.size());
-            raw_buffer data;
-            data.insert(data.end(), res.second.begin(), res.second.end());
-            out_files.push_back(data);
-        } else {
-            throw std::runtime_error("Failed to download image");
-        }
-
+        throw std::invalid_argument("Remote HTTP/HTTPS media URLs are strictly disabled for security. Please provide media as base64 data URIs.");
     } else if (string_starts_with(url, "file://")) {
-        if (media_path.empty()) {
-            throw std::invalid_argument("file:// URLs are not allowed unless --media-path is specified");
-        }
-        // load local image file
-        std::string file_path = url.substr(7); // remove "file://"
-        raw_buffer data;
-        if (!fs_validate_filename(file_path, true)) {
-            throw std::invalid_argument("file path is not allowed: " + file_path);
-        }
-        SRV_INF("loading image from local file '%s'\n", (media_path + file_path).c_str());
-        std::ifstream file(media_path + file_path, std::ios::binary);
-        if (!file) {
-            throw std::invalid_argument("file does not exist or cannot be opened: " + file_path);
-        }
-        data.assign((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-        out_files.push_back(data);
-
+        throw std::invalid_argument("file:// URLs are strictly disabled for security.");
     } else if (string_starts_with(url, "data:")) {
         // try to decode base64 image, video, or audio
         std::vector<std::string> parts = string_split<std::string>(url, /*separator*/ ',');
